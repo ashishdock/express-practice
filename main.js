@@ -1,12 +1,31 @@
 const express = require('express');
 const path = require('path');
+require('dotenv').config();
+const ejs = require('ejs');
+const fs = require('fs');
+const helmet = require('helmet');
 
 const birds = require('./birds');
 const middleware = require('./middleware');
 const my_middleware = require('./my-middleware');
-require('dotenv').config();
+const persons = require('./persons');
+const miniapp = require('./miniapp');
+const setcookie = require('./setcookie');
+const resformat = require('./resformat');
+const morganpage = require('./morganpage');
+const bodyparserlink = require('./bodyparserlink');
+const bodyparserroute = require('./bodyparserroute');
+const cookietest = require('./cookietest');
 
 const app = express();
+app.use(helmet('x-powered-by', false));
+
+// app.disable('x-powered-by');
+app.set('x-powered-by', false);
+
+app.locals.title = 'My Express App';
+
+app.set('view engine', 'ejs');
 
 app.get('/', function (req, res) {
   res.send('Hello World!');
@@ -28,6 +47,7 @@ app.all('/secret', (req, res, next) => {
 });
 
 app.get('/ab?cd', (req, res) => {
+  console.dir(app.mountpath);
   res.send('ab?cd');
 });
 
@@ -40,11 +60,37 @@ app.get('/flights/:from-:to', (req, res) => {
   res.send(`Flight from ${req.params.from} to ${req.params.to}`);
 });
 
+app.get('/animals', (req, res) => {
+  console.log('animals route');
+  res.send('animals route');
+});
+
+app.param('animalId', function (req, res, next, animalId) {
+  console.log('CALLED ONLY ONCE');
+  next();
+});
+
+app.get('/animals/:animalId', (req, res, next) => {
+  console.log('although this matches');
+  console.log(app.path());
+  console.dir(`BaseUrl: ${req.baseUrl}`);
+  console.dir(app.path());
+  next();
+});
+app.get('/animals/:animalId', (req, res, next) => {
+  console.log('and this matches too');
+  console.dir(app.path());
+  res.send(`Animal: ${req.params.animalId}`);
+});
+
 //ROUTE HANDLERS ******************************************************************************
 app.get(
   '/example/b',
   (req, res, next) => {
     console.log('Example B: the response will be sent by the next function.');
+    console.dir(app.path());
+    console.log(req.baseUrl);
+    console.dir(req.baseUrl);
     next();
   },
   (req, res) => {
@@ -85,6 +131,8 @@ app.get(
 app
   .route('/book')
   .get((req, res) => {
+    console.dir(app.path());
+    console.log(app.path());
     res.send('Get a random book');
   })
   .post((req, res) => {
@@ -102,6 +150,94 @@ app.use('/middleware', middleware);
 
 app.use('/mode', my_middleware('light'));
 
-app.listen(process.env.PORT, () =>
-  console.log(`Listening on port ${process.env.PORT}`)
+// Router level middleware *************************************
+app.use('/persons', persons);
+
+// Using template engines
+app.get('/index/:id', (req, res) => {
+  console.log('Index page');
+  res.render('index', { data: req.params.id, name: 'Something' });
+});
+
+// Error handling
+app.get('/broken', (req, res) => {
+  throw new Error('BROKEN'); // Express will catch this on its own
+});
+// in the below case pass the error to next and express will handle the error
+app.get('/missingfile', (req, res, next) => {
+  fs.readFile('file-does-not-exist', (err, data) => {
+    if (err) {
+      next(err);
+    } else {
+      res.send(data);
+    }
+  });
+});
+
+// this will throw error to next() function if there is an error in writing to file
+app.get(
+  '/writeinaccessible',
+  (req, res, next) => {
+    fs.writeFile('inaccessible-path', 'data', next); // this actually still creates the file
+  },
+
+  (req, res) => {
+    res.send('OK');
+  }
 );
+
+app.get('/timererror', (req, res, next) => {
+  setTimeout(() => {
+    try {
+      throw new Error('BROKEN');
+    } catch (error) {
+      next(error);
+    }
+  }, 100);
+});
+
+app.get('/promiseerror', (req, res, next) => {
+  Promise.resolve()
+    .then(() => {
+      throw new Error('BROKEN');
+    })
+    .catch(next);
+});
+
+app.get('/readfileerror', (req, res, next) => {
+  fs.readFile(
+    '/maybe-valid-file',
+    'utf-8',
+    (err, data) => {
+      res.locals.data = data;
+      next(err);
+    },
+    (req, res) => {
+      res.locals.data = res.locals.data.split(',')[1];
+      res.send(res.locals.data);
+    }
+  );
+});
+
+app.use('/miniapp', miniapp);
+
+app.use('/setcookie', setcookie);
+
+app.use('/resformat', resformat);
+
+app.use('/morganpage', morganpage);
+
+app.use('/bodyparserlink', bodyparserlink);
+// app.post('/bodyparserlink', bodyparserlink);
+
+app.use('/bodyparserroute', bodyparserroute);
+
+app.use('/cookietest', cookietest);
+
+app.listen(process.env.PORT, () => {
+  console.log(`Listening on port ${process.env.PORT}`);
+  console.log(app.locals.title);
+  console.log(app.locals.email);
+  console.log(app.locals.__dirname);
+  console.log(app.locals.PORT);
+});
