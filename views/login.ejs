@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <title>Login</title>
+  </head>
+  <body>
+    <% if (message) { %>
+    <h4><%= message %></h4>
+    <% } %>
+    <form action="/signup/login" method="POST">
+      <input name="id" type="text" required="required" placeholder="User ID" />
+      <input
+        name="password"
+        type="password"
+        required="required"
+        placeholder="Password"
+      />
+      <input type="submit" value="Log in" />
+    </form>
+  </body>
+</html>

@@ -16,8 +16,23 @@ const morganpage = require('./morganpage');
 const bodyparserlink = require('./bodyparserlink');
 const bodyparserroute = require('./bodyparserroute');
 const cookietest = require('./cookietest');
+const sessionsp = require('./public/js/sessions-practice');
+const authorization = require('./auth/authorization');
+const responseTime = require('response-time');
+// const StatsD = require('node-statsd');
+const favicon = require('serve-favicon');
+const timeout = require('connect-timeout');
+var vhost = require('vhost');
 
 const app = express();
+// const stats = new StatsD();
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(timeout('0.2ms'));
+
+function haltOnTimedout(req, res, next) {
+  if (!req.timedout) next();
+}
+
 app.use(helmet('x-powered-by', false));
 
 // app.disable('x-powered-by');
@@ -26,11 +41,34 @@ app.set('x-powered-by', false);
 app.locals.title = 'My Express App';
 
 app.set('view engine', 'ejs');
+app.use(responseTime());
+
+// app.use(
+//   responseTime(function (req, res, time) {
+//     var stat = (req.method + req.url)
+//       .toLowerCase()
+//       .replace(/[:\.]/g, '')
+//       .replace(/\//g, '_');
+//     stats.timing(stat, time);
+//   })
+// );
 
 app.get('/', function (req, res) {
   res.send('Hello World!');
   //   res.send('Hi Universe!');
 });
+
+// app.use(
+//   vhost('*.ashish.com', (req, res) => {
+//     console.dir(req.vhost.host);
+//     console.dir(req.vhost.hostname);
+//     console.dir(req.vhost.length);
+//     console.dir(req.vhost[0]);
+//     console.dir(req.vhost[1]);
+//   })
+// );
+
+app.use(haltOnTimedout);
 
 app.post('/', (req, res) => res.send('Post request to the homepage'));
 
@@ -233,6 +271,12 @@ app.use('/bodyparserlink', bodyparserlink);
 app.use('/bodyparserroute', bodyparserroute);
 
 app.use('/cookietest', cookietest);
+
+// SESSION PRACTICE ************************************************
+app.use('/sessions', sessionsp);
+
+// AUTHORIZATION
+app.use('/signup', authorization);
 
 app.listen(process.env.PORT, () => {
   console.log(`Listening on port ${process.env.PORT}`);
