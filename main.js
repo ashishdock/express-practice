@@ -28,6 +28,10 @@ const multerTest = require('./multer/multerTest');
 const multerexample = require('./multerexample/multerexample');
 const formidableexample = require('./formidable/formidableexample');
 const jwtroot = require('./jwt/jwtroot');
+const slugifyroute = require('./slugifyroute');
+const otproute = require('./otp/otproute.js');
+const queryparamsroute = require('./queryparamsroute');
+const axiosroute = require('./axios/axiosroute');
 
 const app = express();
 // const stats = new StatsD();
@@ -292,6 +296,17 @@ app.use('/formidableexample', formidableexample);
 
 // JSON WEB TOKEN
 app.use('/jwtroot', jwtroot);
+
+//SLUGIFY
+app.use('/slugifyroute', slugifyroute);
+
+//OTP
+app.use('/otproute', otproute);
+
+// QUERYPARAMS
+app.use('/queryparamsroute', queryparamsroute);
+
+app.use('/axiosroute', axiosroute);
 
 app.listen(process.env.PORT, () => {
   console.log(`Listening on port ${process.env.PORT}`);
