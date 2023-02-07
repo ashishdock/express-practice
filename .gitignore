@@ -1,5 +1,7 @@
 public/images
 .vscode
+formidable/uploads
+multer/uploads
 
 # Logs
 logs

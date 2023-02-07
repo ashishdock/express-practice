@@ -4,6 +4,11 @@ require('dotenv').config();
 const ejs = require('ejs');
 const fs = require('fs');
 const helmet = require('helmet');
+const responseTime = require('response-time');
+// const StatsD = require('node-statsd');
+const favicon = require('serve-favicon');
+const timeout = require('connect-timeout');
+var vhost = require('vhost');
 
 const birds = require('./birds');
 const middleware = require('./middleware');
@@ -18,16 +23,16 @@ const bodyparserroute = require('./bodyparserroute');
 const cookietest = require('./cookietest');
 const sessionsp = require('./public/js/sessions-practice');
 const authorization = require('./auth/authorization');
-const responseTime = require('response-time');
-// const StatsD = require('node-statsd');
-const favicon = require('serve-favicon');
-const timeout = require('connect-timeout');
-var vhost = require('vhost');
+const multerForm = require('./multer/multerForm');
+const multerTest = require('./multer/multerTest');
+const multerexample = require('./multerexample/multerexample');
+const formidableexample = require('./formidable/formidableexample');
+const jwtroot = require('./jwt/jwtroot');
 
 const app = express();
 // const stats = new StatsD();
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(timeout('0.2ms'));
+// app.use(timeout('0.2ms'));
 
 function haltOnTimedout(req, res, next) {
   if (!req.timedout) next();
@@ -68,7 +73,7 @@ app.get('/', function (req, res) {
 //   })
 // );
 
-app.use(haltOnTimedout);
+// app.use(haltOnTimedout);
 
 app.post('/', (req, res) => res.send('Post request to the homepage'));
 
@@ -277,6 +282,16 @@ app.use('/sessions', sessionsp);
 
 // AUTHORIZATION
 app.use('/signup', authorization);
+
+// Multerform
+app.use('/multerform', multerForm);
+app.use('/multerexample', multerexample);
+
+// Formidable
+app.use('/formidableexample', formidableexample);
+
+// JSON WEB TOKEN
+app.use('/jwtroot', jwtroot);
 
 app.listen(process.env.PORT, () => {
   console.log(`Listening on port ${process.env.PORT}`);
